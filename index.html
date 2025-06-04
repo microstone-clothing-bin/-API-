@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>지도 + 사이드바 예제</title>
+    <script src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=네이버APIID"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: sans-serif;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .left-menu {
+            width: 60px;
+            background-color: #2d2d2d;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 20px;
+            color: white;
+        }
+
+        .left-menu div {
+            margin: 20px 0;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .search-container {
+            display: flex;
+            align-items: center;
+            background-color: white;
+            border-radius: 20px;
+            padding: 5px 10px;
+            margin-bottom: 15px;
+        }
+
+        .search-container input {
+            border: none;
+            outline: none;
+            font-size: 14px;
+            flex: 1;
+            padding: 5px;
+            border-radius: 20px;
+            background-color: transparent;
+        }
+
+        .search-icon {
+            font-size: 16px;
+            color: #6f42c1;
+            margin-left: 5px;
+        }
+
+        .sidebar {
+            width: 300px;
+            background-color: #ffffff;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            background: linear-gradient(135deg, #6f42c1, #9b59b6);
+            color: white;
+            padding: 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .weather-info {
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+        .menu-cards {
+            padding: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .menu-card {
+            width: 120px;
+            height: 100px;
+            background-color: #f1f3f5;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 14px;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            transition: background-color 0.3s;
+        }
+
+        .menu-card:hover {
+            background-color: #e9ecef;
+        }
+
+        .map-container {
+            flex: 1;
+            position: relative;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- 왼쪽 고정 메뉴 -->
+    <div class="left-menu">
+        <div>🏠<br/>홈</div>
+        <div>🕓<br/>최근</div>
+        <div>📁<br/>저장</div>
+        <div style="margin-top: auto; margin-bottom: 20px;">🔐<br/>로그인</div>
+    </div>
+
+    <!-- 사이드바 -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div class="search-container">
+                <input type="text" placeholder="검색어를 입력하세요..." id="searchInput" />
+                <span class="search-icon">🔍</span>
+            </div>
+            양주시 은현면
+            <div class="weather-info">🌙 17° | 오류신고</div>
+        </div>
+
+        <div class="menu-cards">
+            <div class="menu-card">⚡<br/>전기차 충전소</div>
+            <div class="menu-card">🅿️<br/>공영주차장</div>
+            <div class="menu-card">🧪<br/>의류수거함</div>
+            <div class="menu-card">🏠<br/>흡연부스</div>
+        </div>
+    </div>
+
+    <!-- 지도 영역 -->
+    <div class="map-container">
+        <div id="map"></div>
+    </div>
+</div>
+
+<script>
+    var map = new naver.maps.Map('map', {
+        center: new naver.maps.LatLng(37.5666805, 126.9784147),
+        zoom: 14,
+        zoomControl: true,
+        zoomControlOptions: {
+            style: naver.maps.ZoomControlStyle.SMALL,
+            position: naver.maps.Position.TOP_RIGHT
+        }
+    });
+
+    var infowindow = new naver.maps.InfoWindow();
+
+    const places = [
+        {
+            name: "서울특별시청",
+            position: new naver.maps.LatLng(37.5666805, 126.9784147),
+            info: `
+                <div class="iw_inner">
+                    <h3>서울특별시청</h3>
+                    <p>서울특별시 중구 태평로1가 31<br />
+                    <a href="http://www.seoul.go.kr" target="_blank">www.seoul.go.kr</a></p>
+                </div>`
+        },
+        {
+            name: "양주시청",
+            position: new naver.maps.LatLng(37.7853, 127.0457),
+            info: `
+                <div class="iw_inner">
+                    <h3>양주시청</h3>
+                    <p>경기도 양주시 부흥로 1533<br />
+                    <a href="http://www.yangju.go.kr" target="_blank">www.yangju.go.kr</a></p>
+                </div>`
+        }
+    ];
+
+    const markers = [];
+
+    places.forEach(place => {
+        const marker = new naver.maps.Marker({
+            position: place.position,
+            map: map
+        });
+
+        naver.maps.Event.addListener(marker, "click", function () {
+            infowindow.setContent(place.info);
+            infowindow.open(map, marker);
+        });
+
+        markers.push({ name: place.name, marker: marker, info: place.info });
+    });
+
+    document.getElementById("searchInput").addEventListener("keypress", function (e) {
+        if (e.key === "Enter") {
+            const query = e.target.value.trim().toLowerCase();
+            const found = markers.find(m => m.name.toLowerCase().includes(query));
+
+            if (found) {
+                map.panTo(found.marker.getPosition());
+                infowindow.setContent(found.info);
+                infowindow.open(map, found.marker);
+            } else {
+                alert("일치하는 장소가 없습니다.");
+            }
+        }
+    });
+
+    // ✅ 날씨 정보 불러오기 함수
+    async function fetchWeather() {
+        const serviceKey = "O89vpSTP%2BbzT5ooPUPwklzjWmhFsPmdAMxZPj7HZnVF3W0QRYUyiLZIjCyxRnRg12moz3%2FIoC7b1b3l1SKPlKA%3D%3D"; // ← 여기에 Encoding된 인증키 입력
+        const baseDate = getToday(); // 오늘 날짜
+        const baseTime = "0500"; // 발표 시각 (ex. 0200, 0500, 0800 등)
+        const nx = 60;  // 양주시 은현면 격자 X
+        const ny = 130; // 양주시 은현면 격자 Y
+
+        const url = `https://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getVilageFcst?` +
+            `serviceKey=${serviceKey}&numOfRows=100&pageNo=1&dataType=JSON&base_date=${baseDate}&base_time=${baseTime}&nx=${nx}&ny=${ny}`;
+
+        try {
+            const res = await fetch(url);
+            const data = await res.json();
+            const items = data.response.body.items.item;
+
+            const weatherItem = items.find(item => item.category === "TMP"); // 현재 기온
+            const temp = weatherItem ? weatherItem.fcstValue : "N/A";
+
+            document.getElementById("weather").textContent = `🌡 현재 기온: ${temp}°C | 오류신고`;
+        } catch (err) {
+            console.error("날씨 API 오류:", err);
+            document.getElementById("weather").textContent = "⚠ 날씨 정보를 가져오지 못했습니다.";
+        }
+    }
+
+    // ✅ 오늘 날짜 (yyyymmdd) 반환
+    function getToday() {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        return `${yyyy}${dd}${mm}`;
+    }
+
+    fetchWeather(); // 실행
+</script>
+
+</body>
+</html>
